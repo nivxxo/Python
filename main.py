@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 print("=" * 50)
 print("ШАГ 1: Загрузка и первичный осмотр данных")
@@ -17,25 +18,123 @@ except FileNotFoundError:
 
 print("\n1. Первые 5 строк данных:")
 print(df.head())
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("2. Общая информация о данных:")
 df.info()
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("3. Статистическое описание числовых столбцов:")
 print(df.describe())
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("4. Количество строк и столбцов:")
 print(f"Строк: {df.shape[0]}, Столбцов: {df.shape[1]}")
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("ВСЕ СТОЛБЦЫ В ДАННЫХ:")
 for i, col in enumerate(df.columns, 1):
     print(f"{i}. {col}")
 
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
+
+print("=" * 50)
+print("ШАГ 2: СТАТИСТИЧЕСКИЙ ОБЗОР ДАННЫХ")
+print("=" * 50)
+
+print("1. ПРОПУЩЕННЫЕ ЗНАЧЕНИЯ ПО СТОЛБЦАМ:")
+print("-" * 40)
+missing_values = df.isnull().sum()
+missing_percentage = (df.isnull().sum() / len(df)) * 100
+missing_info = pd.DataFrame({
+    'Пропущенных значений': missing_values,
+    'Процент пропусков': missing_percentage.round(2)
+})
+print(missing_info)
+print("\n" + "-" * 30)
+
+print("2. ТИПЫ ДАННЫХ ПО СТОЛБЦАМ:")
+print("-" * 40)
+dtypes_info = pd.DataFrame({
+    'Тип данных': df.dtypes,
+    'Уникальных значений': df.nunique()
+})
+print(dtypes_info)
+print("\n" + "-" * 30)
+
+print("3. УНИКАЛЬНЫЕ ЗНАЧЕНИЯ В КАТЕГОРИАЛЬНЫХ СТОЛБЦАХ:")
+print("-" * 40)
+
+
+categorical_cols = df.select_dtypes(include=['object', 'category']).columns
+
+for col in categorical_cols:
+    print(f"\nСтолбец: {col}")
+    print(f"Количество уникальных значений: {df[col].nunique()}")
+    print("Уникальные значения:")
+    unique_vals = df[col].unique()
+
+
+    if len(unique_vals) > 10:
+        print(f"Первые 10: {unique_vals[:10]}")
+        print(f"... и ещё {len(unique_vals) - 10} значений")
+    else:
+        for val in unique_vals:
+            print(f"  - {val}")
+    print("-" * 20)
+
+print("\n" + "-" * 30)
+
+print("4. ДЕТАЛЬНЫЙ АНАЛИЗ КЛЮЧЕВЫХ КАТЕГОРИАЛЬНЫХ СТОЛБЦОВ:")
+print("-" * 40)
+
+status_cols = [col for col in df.columns if 'status' in col.lower()]
+vehicle_cols = [col for col in df.columns if any(x in col.lower() for x in ['vehicle', 'auto', 'car', 'type'])]
+
+print("Возможные столбцы статуса:", status_cols)
+print("Возможные столбцы типа транспорта:", vehicle_cols)
+
+if status_cols:
+    status_col = status_cols[0]
+    print(f"\nАНАЛИЗ СТОЛБЦА '{status_col}':")
+    print(f"Количество уникальных статусов: {df[status_col].nunique()}")
+    print("Распределение по статусам:")
+    status_counts = df[status_col].value_counts()
+    print(status_counts)
+
+    print("\nПроцентное распределение:")
+    status_percentage = (df[status_col].value_counts(normalize=True) * 100).round(2)
+    print(status_percentage)
+else:
+    print("\nСтолбец статуса бронирования не найден")
+
+if vehicle_cols:
+    vehicle_col = vehicle_cols[0]
+    print(f"\nАНАЛИЗ СТОЛБЦА '{vehicle_col}':")
+    print(f"Количество уникальных типов транспорта: {df[vehicle_col].nunique()}")
+    print("Распределение по типам транспорта:")
+    vehicle_counts = df[vehicle_col].value_counts()
+    print(vehicle_counts)
+
+    print("\nПроцентное распределение:")
+    vehicle_percentage = (df[vehicle_col].value_counts(normalize=True) * 100).round(2)
+    print(vehicle_percentage)
+else:
+    print("\nСтолбец типа транспорта не найден")
+
+print("\n" + "-" * 30)
+
+print("5. ОБЩАЯ СТАТИСТИКА ЧИСЛОВЫХ СТОЛБЦОВ:")
+print("-" * 40)
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+if len(numeric_cols) > 0:
+    numeric_stats = df[numeric_cols].describe().round(2)
+    print(numeric_stats)
+else:
+    print("Числовые столбцы не найдены")
+
+print("\n" + "-" * 30)
+
 
 print("=" * 50)
 print("ШАГ 3: Выборка и фильтрация данных")
@@ -75,7 +174,7 @@ print(f"Тип транспорта: {vehicle_col}")
 print(f"Оплата: {payment_col}")
 print(f"Стоимость: {value_col}")
 
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("1. Выбранные столбцы (первые 5 строк):")
 try:
@@ -84,7 +183,7 @@ try:
 except KeyError as e:
     print(f"Ошибка: столбец {e} не найден. Проверьте названия столбцов.")
 
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("2. Бронирования со статусом 'Cancelled by Driver':")
 try:
@@ -94,7 +193,7 @@ try:
 except KeyError:
     print("Столбец статуса не найден")
 
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("3. Бронирования Auto с Booking Value >500:")
 try:
@@ -104,11 +203,10 @@ try:
 except KeyError:
     print("Не удалось выполнить фильтрацию. Проверьте названия столбцов.")
 
-print("\n" + "-"*30)
+print("\n" + "-" * 30)
 
 print("4. Бронирования за март 2024 года:")
 try:
-
     df[datetime_col] = pd.to_datetime(df[datetime_col])
     march_2024 = df[(df[datetime_col] >= '2024-03-01') & (df[datetime_col] <= '2024-03-31')]
     print(march_2024)
